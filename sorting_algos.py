@@ -86,13 +86,130 @@ def quicksort(arr, n):
     return arr
 
 def merge_sort(arr, n):
+    def merge(left, right):
+        merged = []
+        i=j=0
+        while i < len(left) and j < len(right):
+            if left[i] < right[j]:
+                merged.append(left[i])
+                i += 1
+            else:
+                merged.append(right[j])
+                j += 1
+        
+        merged.extend(left[i:])
+        merged.extend(right[j:])
+        return merged
+    
     def merge_sort_algo(arr):
         if len(arr) <= 1:
             return arr
+        
         mid = len(arr) // 2
         left_half = arr[:mid]
         right_half = arr[mid:]
+
+        left_sorted = merge_sort_algo(left_half)
+        right_sorted = merge_sort_algo(right_half)
+        return merge(left_sorted, right_sorted)
+    
+    arr = merge_sort_algo(arr)
+    return arr
+
+def merge_sort_no_recursion(arr, n):
+    def merge(left, right):
+        merged = []
+        i=j=0
+        while i < len(left) and j < len(right):
+            if left[i] < right[j]:
+                merged.append(left[i])
+                i += 1
+            else:
+                merged.append(right[j])
+                j += 1
+        
+        merged.extend(left[i:])
+        merged.extend(right[j:])
+        return merged
+    
+    def merge_sort_algo(arr):
+        step = 1
+        while step < n:
+            for i in range(0, n, 2*step):
+                left = arr[i:i + step]
+                right = arr[i + step:i + 2*step]
+                merged = merge(left, right)
+
+                for j, val in enumerate(merged):
+                    arr[i + j] = val
+            step *= 2
+
     merge_sort_algo(arr)
+    return arr
+
+def counting_sort(arr, n):
+    # Counting sort only works on array with positive ints.
+    if min(arr) < 0:
+        return arr
+    
+    maximum = max(arr)
+    count_arr = [0] * (maximum + 1)
+    while len(arr) > 0:
+        value = arr.pop(0)
+        count_arr[value] += 1
+    
+    for i in range(len(count_arr)):
+        while count_arr[i] > 0:
+            arr.append(i)
+            count_arr[i] -= 1
+
+    return arr
+
+def radix_sort(arr, n):
+    # Radix sort only works on array with positive ints.
+    if min(arr) < 0:
+        return arr
+    
+    radix_arr = [[] for _ in range(10)]
+    maximum = max(arr)
+    exp = 1
+    while maximum // exp > 0:
+        while len(arr) > 0:
+            value = arr.pop()
+            radix_idx = (value // exp) % 10
+            radix_arr[radix_idx].append(value)
+        
+        for bucket in radix_arr:
+            while len(bucket) > 0:
+                value = bucket.pop()
+                arr.append(value)
+        
+        exp *= 10
+
+    return arr
+
+def heapsort(arr, n):
+    def heapify(arr, n, i):
+        largest = i
+        left = 2 * i + 1
+        right = 2 * i + 2
+        
+        if left < n and arr[largest] < arr[left]:
+            largest = left
+        if right < n and arr[largest] < arr[right]:
+            largest = right
+        
+        if largest != i:
+            arr[i], arr[largest] = arr[largest], arr[i]
+            heapify(arr, n, largest)
+    
+    for i in range(n // 2 - 1, -1, -1):
+        heapify(arr, n, i)
+
+    for i in range(n-1, 0, -1):
+        arr[i], arr[0] = arr[0], arr[i]
+        heapify(arr, i, 0)
+
     return arr
 
 def output_arrays(arr, func_dict, SIZE):
@@ -138,7 +255,12 @@ def main():
         'SLi': selection_sort_improved,
         'INS': insertion_sort,
         'INi': insertion_sort_improved,
-        'QIK': quicksort
+        'QIK': quicksort,
+        'MRG': merge_sort,
+        'Mnr': merge_sort_no_recursion,
+        'CNT': counting_sort,
+        'RDX': radix_sort,
+        'HEP': heapsort
     }
     SIZE, MINIMUM, MAXIMUM, REPEAT = 15, 1, 100, 100
     arr = [random.randint(MINIMUM, MAXIMUM) for _ in range(SIZE)]        
