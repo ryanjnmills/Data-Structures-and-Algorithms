@@ -1,7 +1,7 @@
 #include <iostream>
 #include <array>
+#include <algorithm>
 #include <random>
-#include <map>
 
 using std::array, std::cout;
 
@@ -10,7 +10,7 @@ const int MINIMUM = 1;
 const int MAXIMUM = 100;
 const int REPEAT = 100;
 
-array<int, SIZE> bubbleSort(array<int, SIZE>& arr) {
+array<int, SIZE> bubbleSort(array<int, SIZE> arr) {
     for (int i = 0; i < SIZE-1; i++) {
         bool swapped = false;
         for (int j = 0; j < SIZE-i-1; j++) {
@@ -25,7 +25,7 @@ array<int, SIZE> bubbleSort(array<int, SIZE>& arr) {
     return arr;
 }
 
-array<int, SIZE> selectionSort(array<int, SIZE>& arr) {
+array<int, SIZE> selectionSort(array<int, SIZE> arr) {
     for (int i = 0; i < SIZE-1; i++) {
         int minIdx = i;
         for (int j = i+1; j < SIZE; j++) {
@@ -38,13 +38,130 @@ array<int, SIZE> selectionSort(array<int, SIZE>& arr) {
     return arr;
 }
 
-array<int, SIZE> insertionSort(array<int, SIZE>& arr) {
-    for (int i = 1; i < SIZE-1; i++) {
-        
+array<int, SIZE> insertionSort(array<int, SIZE> arr) {
+    for (int i = 1; i < SIZE; i++) {
+        int key = arr[i];
+        int j = i - 1;
+
+        while (j >= 0 && arr[j] > key) {
+            arr[j+1] = arr[j];
+            j--;
+        }
+        arr[j+1] = key;
+    }
+    return arr;
+}
+
+int partition(array<int, SIZE>&arr, int low, int high) {
+    int pivot = arr[high];
+    int i = low - 1;
+    for (int j = low; j <= high - 1; j++) {
+        if (arr[j] < pivot) {
+            i++;
+            std::swap(arr[i], arr[j]);
+        }
+    }
+    std::swap(arr[i+1], arr[high]);
+    return i+1;
+}
+
+array<int, SIZE> quicksort(array<int, SIZE> arr, int low = 0, int high = SIZE-1) {
+    if (low < high) {
+        int pivotIdx = partition(arr, low, high);
+        quicksort(arr, low, pivotIdx-1);
+        quicksort(arr, pivotIdx+1, high);
+    }
+    return arr;
+}
+
+void merge(array<int, SIZE>& arr, int left, int middle, int right) {
+    int n1 = middle - left + 1;
+    int n2 = right - middle;
+
+    array<int, SIZE> leftArr;
+    array<int, SIZE> rightArr;
+    for (int i = 0; i < n1; i++)
+        leftArr[i] = arr[left + i];
+    for (int i = 0; i < n2; i++)
+        rightArr[i] = arr[middle + 1 + i];
+    
+    int i = 0, j = 0, k = left;
+    while (i < n1 && j < n2) {
+        if (leftArr[i] <= rightArr[j]) {
+            arr[k] = leftArr[i];
+            i++;
+        } else {
+            arr[k] = rightArr[i];
+            j++;
+        }
+        k++;
+    }
+
+    while (i < n1) {
+        arr[k] = leftArr[i];
+        i++;
+        k++;
+    }
+    while (j < n2) {
+        arr[k] = rightArr[j];
+        j++;
+        k++;
     }
 }
 
-void printArray(array<int, SIZE>& arr, std::string name="") {
+array<int, SIZE> mergeSort(array<int, SIZE> arr, int left = 0, int right = SIZE-1) {
+    if (left >= right)
+        return arr;
+    
+    int middle = left + (right - left) / 2;
+    mergeSort(arr, left, middle);
+    mergeSort(arr, middle+1, right);
+    merge(arr, left, middle, right);
+
+    return arr;
+}
+
+array<int, SIZE> countingSort(array<int, SIZE> arr) {
+    int maximum = *std::max_element(arr.begin(), arr.end());
+
+    /* Note that MAXIMUM is the maximum possible value not the actual maximum value of the array. 
+    To improve space efficiency without using a dynamically sized array (std::vector), must use a C-style array. */
+    // array<int, MAXIMUM> countArr = {};
+    int countArr[maximum + 1] = {0};
+    for (int i = 0; i < SIZE; i++)
+        countArr[arr[i]]++;
+
+    for (int i = 1; i <= maximum; i++)
+        countArr[i] += countArr[i - 1];
+
+    array<int, SIZE> outpurArr;
+    for (int i = SIZE-1; i >= 0; i--) {
+        outpurArr[countArr[arr[i]] - 1] = arr[i];
+        countArr[arr[i]]--;
+    }
+
+    /*
+    for (int i = 0; i < SIZE; i++)
+        arr[i] = outputarr[i];
+    */
+    return outpurArr;
+}
+
+void countSort(array<int, SIZE>, int exp) {
+    
+}
+
+array<int, SIZE> radixSort(array<int, SIZE> arr, int exp = 1) {
+    int maximum = *std::max_element(arr.begin(), arr.end());
+    
+    for (int exp = 1; maximum/exp > 0; exp *= 10) {
+
+    }
+
+    return arr;
+}
+
+void printArray(array<int, SIZE>& arr, std::string name = "") {
     cout << name << "[ ";
     for (const auto& el : arr)
         cout << el << " ";
@@ -54,13 +171,20 @@ void printArray(array<int, SIZE>& arr, std::string name="") {
 void outputArrays(array<int, SIZE>& arr) {
     cout << "UNSORTED ARRAY\n";
     printArray(arr);
-
+    
     array<int, SIZE> bbl = bubbleSort(arr);
-    printArray(bbl, "BBL: ");
     array<int, SIZE> slc = selectionSort(arr);
-    printArray(slc, "SLC: ");
     array<int, SIZE> ins = insertionSort(arr);
+    array<int, SIZE> qik = quicksort(arr);
+    array<int, SIZE> mrg = mergeSort(arr);
+    array<int, SIZE> cnt = countingSort(arr);
+
+    printArray(bbl, "BBL: ");
+    printArray(slc, "SLC: ");
     printArray(ins, "INS: ");
+    printArray(qik, "QIK: ");
+    printArray(mrg, "MRG: ");
+    printArray(cnt, "CNT: ");
 }
 
 void outputTimings() {
