@@ -10,6 +10,21 @@ const int MINIMUM = 1;
 const int MAXIMUM = 100;
 const int REPEAT = 100;
 
+void generateRandomArray(std::array<int, SIZE>& arr) {
+    std::mt19937 prng(std::random_device{}());
+    std::uniform_int_distribution<int> dist(MINIMUM, MAXIMUM);
+    for (auto& i : arr) {
+        i = dist(prng);
+    }
+}
+
+void printArray(array<int, SIZE>& arr, std::string name = "") {
+    cout << name << "[ ";
+    for (const auto& el : arr)
+        cout << el << " ";
+    cout << "]\n";
+}
+
 array<int, SIZE> bubbleSort(array<int, SIZE> arr) {
     for (int i = 0; i < SIZE-1; i++) {
         bool swapped = false;
@@ -122,50 +137,57 @@ array<int, SIZE> mergeSort(array<int, SIZE> arr, int left = 0, int right = SIZE-
 }
 
 array<int, SIZE> countingSort(array<int, SIZE> arr) {
+    array<int, SIZE> outputArr;
     int maximum = *std::max_element(arr.begin(), arr.end());
-
     /* Note that MAXIMUM is the maximum possible value not the actual maximum value of the array. 
     To improve space efficiency without using a dynamically sized array (std::vector), must use a C-style array. */
     // array<int, MAXIMUM> countArr = {};
     int countArr[maximum + 1] = {0};
+    
     for (int i = 0; i < SIZE; i++)
         countArr[arr[i]]++;
 
     for (int i = 1; i <= maximum; i++)
         countArr[i] += countArr[i - 1];
 
-    array<int, SIZE> outpurArr;
     for (int i = SIZE-1; i >= 0; i--) {
-        outpurArr[countArr[arr[i]] - 1] = arr[i];
+        outputArr[countArr[arr[i]] - 1] = arr[i];
         countArr[arr[i]]--;
     }
-
     /*
     for (int i = 0; i < SIZE; i++)
-        arr[i] = outputarr[i];
+        arr[i] = outputArr[i];
     */
-    return outpurArr;
+    return outputArr;
 }
 
-void countSort(array<int, SIZE>, int exp) {
+void countingSortForRadix(array<int, SIZE>& arr, int exp) {
+    array<int, SIZE> outputArr;
+    array<int, 10> countArr = {0};
     
+    for (int i = 0; i < SIZE; i++)
+        countArr[(arr[i] / exp) % 10]++;
+    
+    for (int i = 1; i < 10; i++)
+        countArr[i] += countArr[i - 1];
+
+    for (int i = SIZE-1; i >= 0; i--) {
+        outputArr[countArr[(arr[i] / exp) % 10] - 1] = arr[i];
+        countArr[(arr[i] / exp) % 10]--;
+    }
+
+    for (int i = 0; i < SIZE; i++)
+        arr[i] = outputArr[i];
 }
 
 array<int, SIZE> radixSort(array<int, SIZE> arr, int exp = 1) {
     int maximum = *std::max_element(arr.begin(), arr.end());
     
     for (int exp = 1; maximum/exp > 0; exp *= 10) {
-
+        countingSortForRadix(arr, exp);
     }
 
     return arr;
-}
-
-void printArray(array<int, SIZE>& arr, std::string name = "") {
-    cout << name << "[ ";
-    for (const auto& el : arr)
-        cout << el << " ";
-    cout << "]\n";
 }
 
 void outputArrays(array<int, SIZE>& arr) {
@@ -178,6 +200,7 @@ void outputArrays(array<int, SIZE>& arr) {
     array<int, SIZE> qik = quicksort(arr);
     array<int, SIZE> mrg = mergeSort(arr);
     array<int, SIZE> cnt = countingSort(arr);
+    array<int, SIZE> rdx = radixSort(arr);
 
     printArray(bbl, "BBL: ");
     printArray(slc, "SLC: ");
@@ -185,6 +208,7 @@ void outputArrays(array<int, SIZE>& arr) {
     printArray(qik, "QIK: ");
     printArray(mrg, "MRG: ");
     printArray(cnt, "CNT: ");
+    printArray(rdx, "RDX: ");
 }
 
 void outputTimings() {
@@ -193,14 +217,7 @@ void outputTimings() {
 
 int main() {
     array<int, SIZE> arr;
-    std::mt19937 prng(std::random_device{}());
-    std::uniform_int_distribution<int> dist(MINIMUM, MAXIMUM);
-
-    for (auto& i : arr) {
-        i = dist(prng);
-    }
-
+    generateRandomArray(arr);
     outputArrays(arr);
-
     return 0;
 }
