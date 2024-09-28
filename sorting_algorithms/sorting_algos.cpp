@@ -2,6 +2,7 @@
 #include <array>
 #include <algorithm>
 #include <random>
+#include <chrono>
 
 using std::array, std::cout;
 
@@ -18,14 +19,14 @@ void generateRandomArray(std::array<int, SIZE>& arr) {
     }
 }
 
-void printArray(array<int, SIZE>& arr, std::string name = "") {
+void printArray(const array<int, SIZE>& arr, std::string name = "") {
     cout << name << "[ ";
     for (const auto& el : arr)
         cout << el << " ";
     cout << "]\n";
 }
 
-array<int, SIZE> bubbleSort(array<int, SIZE> arr) {
+void bubbleSort(array<int, SIZE>& arr) {
     for (int i = 0; i < SIZE-1; i++) {
         bool swapped = false;
         for (int j = 0; j < SIZE-i-1; j++) {
@@ -37,10 +38,9 @@ array<int, SIZE> bubbleSort(array<int, SIZE> arr) {
         if (swapped == false)
             break;
     }
-    return arr;
 }
 
-array<int, SIZE> selectionSort(array<int, SIZE> arr) {
+void selectionSort(array<int, SIZE>& arr) {
     for (int i = 0; i < SIZE-1; i++) {
         int minIdx = i;
         for (int j = i+1; j < SIZE; j++) {
@@ -50,10 +50,9 @@ array<int, SIZE> selectionSort(array<int, SIZE> arr) {
         if (minIdx != i)
             std::swap(arr[minIdx], arr[i]);
     }
-    return arr;
 }
 
-array<int, SIZE> insertionSort(array<int, SIZE> arr) {
+void insertionSort(array<int, SIZE>& arr) {
     for (int i = 1; i < SIZE; i++) {
         int key = arr[i];
         int j = i - 1;
@@ -64,10 +63,9 @@ array<int, SIZE> insertionSort(array<int, SIZE> arr) {
         }
         arr[j+1] = key;
     }
-    return arr;
 }
 
-int partition(array<int, SIZE>&arr, int low, int high) {
+int partition(array<int, SIZE>& arr, int low, int high) {
     int pivot = arr[high];
     int i = low - 1;
     for (int j = low; j <= high - 1; j++) {
@@ -80,13 +78,12 @@ int partition(array<int, SIZE>&arr, int low, int high) {
     return i+1;
 }
 
-array<int, SIZE> quicksort(array<int, SIZE> arr, int low = 0, int high = SIZE-1) {
+void quicksort(array<int, SIZE>& arr, int low = 0, int high = SIZE-1) {
     if (low < high) {
         int pivotIdx = partition(arr, low, high);
         quicksort(arr, low, pivotIdx-1);
         quicksort(arr, pivotIdx+1, high);
     }
-    return arr;
 }
 
 void merge(array<int, SIZE>& arr, int left, int middle, int right) {
@@ -106,7 +103,7 @@ void merge(array<int, SIZE>& arr, int left, int middle, int right) {
             arr[k] = leftArr[i];
             i++;
         } else {
-            arr[k] = rightArr[i];
+            arr[k] = rightArr[j];
             j++;
         }
         k++;
@@ -124,19 +121,17 @@ void merge(array<int, SIZE>& arr, int left, int middle, int right) {
     }
 }
 
-array<int, SIZE> mergeSort(array<int, SIZE> arr, int left = 0, int right = SIZE-1) {
+void mergeSort(array<int, SIZE>& arr, int left = 0, int right = SIZE-1) {
     if (left >= right)
-        return arr;
+        return;
     
     int middle = left + (right - left) / 2;
     mergeSort(arr, left, middle);
     mergeSort(arr, middle+1, right);
     merge(arr, left, middle, right);
-
-    return arr;
 }
 
-array<int, SIZE> countingSort(array<int, SIZE> arr) {
+void countingSort(array<int, SIZE>& arr) {
     array<int, SIZE> outputArr;
     int maximum = *std::max_element(arr.begin(), arr.end());
     /* Note that MAXIMUM is the maximum possible value not the actual maximum value of the array. 
@@ -154,11 +149,9 @@ array<int, SIZE> countingSort(array<int, SIZE> arr) {
         outputArr[countArr[arr[i]] - 1] = arr[i];
         countArr[arr[i]]--;
     }
-    /*
+
     for (int i = 0; i < SIZE; i++)
         arr[i] = outputArr[i];
-    */
-    return outputArr;
 }
 
 void countingSortForRadix(array<int, SIZE>& arr, int exp) {
@@ -180,44 +173,90 @@ void countingSortForRadix(array<int, SIZE>& arr, int exp) {
         arr[i] = outputArr[i];
 }
 
-array<int, SIZE> radixSort(array<int, SIZE> arr, int exp = 1) {
+void radixSort(array<int, SIZE>& arr, int exp = 1) {
     int maximum = *std::max_element(arr.begin(), arr.end());
     
     for (int exp = 1; maximum/exp > 0; exp *= 10) {
         countingSortForRadix(arr, exp);
     }
-
-    return arr;
 }
 
-void outputArrays(array<int, SIZE>& arr) {
-    cout << "UNSORTED ARRAY\n";
-    printArray(arr);
+void heapify(array<int, SIZE>& arr, int N, int i) {
+    int largest = i;
+    int left = 2 * i + 1;
+    int right = 2 * i + 2;
+
+    if (left < N && arr[largest] < arr[left])
+        largest = left;
+    if (right < N && arr[largest] < arr[right])
+        largest = right;
+
+    if (largest != i) {
+        std::swap(arr[i], arr[largest]);
+        heapify(arr, N, largest);
+    }
+}
+
+void heapSort(array<int, SIZE>& arr) {
+    for (int i = SIZE/2-1; i >= 0; i--)
+        heapify(arr, SIZE, i);
     
-    array<int, SIZE> bbl = bubbleSort(arr);
-    array<int, SIZE> slc = selectionSort(arr);
-    array<int, SIZE> ins = insertionSort(arr);
-    array<int, SIZE> qik = quicksort(arr);
-    array<int, SIZE> mrg = mergeSort(arr);
-    array<int, SIZE> cnt = countingSort(arr);
-    array<int, SIZE> rdx = radixSort(arr);
-
-    printArray(bbl, "BBL: ");
-    printArray(slc, "SLC: ");
-    printArray(ins, "INS: ");
-    printArray(qik, "QIK: ");
-    printArray(mrg, "MRG: ");
-    printArray(cnt, "CNT: ");
-    printArray(rdx, "RDX: ");
+    for (int i = SIZE-1; i > 0; i--) {
+        std::swap(arr[0], arr[i]);
+        heapify(arr, i, 0);
+    }
 }
 
-void outputTimings() {
+template <typename SortFunc>
+void outputTimings(array<int, SIZE> arr, SortFunc sortFunc, const std::string& sortFuncName) {
+    auto start = std::chrono::high_resolution_clock::now();
+    sortFunc(arr);
+    auto stop = std::chrono::high_resolution_clock::now();
 
+    std::chrono::duration<double> elapsed = stop - start;
+    printArray(arr);
 }
 
 int main() {
     array<int, SIZE> arr;
     generateRandomArray(arr);
-    outputArrays(arr);
+    cout << "UNSORTED ARRAY\n";
+    printArray(arr);
+
+    array<int, SIZE> bbl = arr;
+    array<int, SIZE> slc = arr;
+    array<int, SIZE> ins = arr;
+    array<int, SIZE> qik = arr;
+    array<int, SIZE> mrg = arr;
+    array<int, SIZE> cnt = arr;
+    array<int, SIZE> rdx = arr;
+    array<int, SIZE> hep = arr;
+
+    if (SIZE > 31) {
+        bubbleSort(bbl);
+        selectionSort(slc);
+        insertionSort(ins);
+        quicksort(qik);
+        mergeSort(mrg);
+        countingSort(cnt);
+        radixSort(rdx);
+        heapSort(hep);
+
+        printArray(bbl, "BBL: ");
+        printArray(slc, "SLC: ");
+        printArray(ins, "INS: ");
+        printArray(qik, "QIK: ");
+        printArray(mrg, "MRG: ");
+        printArray(cnt, "CNT: ");
+        printArray(rdx, "RDX: ");
+        printArray(hep, "HEP: ");
+    } else {
+        auto start = std::chrono::high_resolution_clock::now();
+        bubbleSort(bbl);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end-start);
+        cout << "BBL: Time:" << elapsed.count() << std::endl;
+    }
+    
     return 0;
 }
