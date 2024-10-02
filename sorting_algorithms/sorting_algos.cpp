@@ -3,13 +3,16 @@
 #include <algorithm>
 #include <random>
 #include <chrono>
+#include <numeric>
+#include <functional>
 
 using std::array, std::cout;
 
-const int SIZE = 15;
+const int SIZE = 1000;
 const int MINIMUM = 1;
 const int MAXIMUM = 100;
 const int REPEAT = 100;
+array<int, SIZE> sortedArr; 
 
 void generateRandomArray(std::array<int, SIZE>& arr) {
     std::mt19937 prng(std::random_device{}());
@@ -207,22 +210,38 @@ void heapSort(array<int, SIZE>& arr) {
     }
 }
 
-template <typename SortFunc>
-void outputTimings(array<int, SIZE> arr, SortFunc sortFunc, const std::string& sortFuncName) {
-    auto start = std::chrono::high_resolution_clock::now();
-    sortFunc(arr);
-    auto stop = std::chrono::high_resolution_clock::now();
+bool isSorted(array<int, SIZE>& arr) {
+    return true;
+}
 
-    std::chrono::duration<double> elapsed = stop - start;
-    printArray(arr);
+double calculateStats(array<double, REPEAT>& arr) {
+    double sum = std::accumulate(arr.begin(), arr.end(), 0.0);
+    double average = sum / arr.size();
+    double minimum = *std::min_element(arr.begin(), arr.end());
+    double maximum = *std::min_element(arr.begin(), arr.end());
+    return average, minimum, maximum;
+}
+
+void calculateTimings(array<int, SIZE> arr, std::function<void(array<int, SIZE>&)> func, std::string name) {
+    array<double, REPEAT> times;
+    array<int, SIZE> tempArr;
+    for (int i = 0; i < REPEAT; i++) {
+        tempArr = arr;
+        auto start = std::chrono::high_resolution_clock::now();
+        func(tempArr);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        times[i] = elapsed.count();
+    }
+    double avgTime, minTime, maxTime = calculateStats(times);
+    cout << name << " avg: " << avgTime << "  min: " << minTime << "  max: " << maxTime << "\n";
 }
 
 int main() {
     array<int, SIZE> arr;
     generateRandomArray(arr);
-    cout << "UNSORTED ARRAY\n";
-    printArray(arr);
-
+    sortedArr = std::sort(arr.begin(), arr.end());
+    
     array<int, SIZE> bbl = arr;
     array<int, SIZE> slc = arr;
     array<int, SIZE> ins = arr;
@@ -232,7 +251,7 @@ int main() {
     array<int, SIZE> rdx = arr;
     array<int, SIZE> hep = arr;
 
-    if (SIZE > 31) {
+    if (SIZE < 31) {
         bubbleSort(bbl);
         selectionSort(slc);
         insertionSort(ins);
@@ -242,6 +261,8 @@ int main() {
         radixSort(rdx);
         heapSort(hep);
 
+        cout << "UNSORTED ARRAY\n";
+        printArray(arr);
         printArray(bbl, "BBL: ");
         printArray(slc, "SLC: ");
         printArray(ins, "INS: ");
@@ -251,11 +272,15 @@ int main() {
         printArray(rdx, "RDX: ");
         printArray(hep, "HEP: ");
     } else {
-        auto start = std::chrono::high_resolution_clock::now();
-        bubbleSort(bbl);
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end-start);
-        cout << "BBL: Time:" << elapsed.count() << std::endl;
+        cout << "SIZE: " << SIZE << "\nREPEATS: " << REPEAT << "\n";
+        calculateTimings(bbl, &bubbleSort, "[BBL]");
+        calculateTimings(slc, &selectionSort, "[SLC]");
+        calculateTimings(ins, &insertionSort, "[INS]");
+        //calculateTimings(qik, &quicksort, "[QIK]");
+        //calculateTimings(mrg, &mergeSort, "[MRG]");
+        calculateTimings(cnt, &countingSort, "[CNT]");
+        //calculateTimings(rdx, &radixSort, "[RDX]");
+        calculateTimings(hep, &heapSort, "[HEP]");
     }
     
     return 0;
